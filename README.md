@@ -25,17 +25,12 @@ This project is a TCP server that provides a silly quote (joke) to clients after
 
 ### Docker
 
-1. Create a Docker network:  
-    ```bash
-    make create-network
-    ```
-
-2. To start the server container, run:  
+1. To start the server container, run:  
     ```bash
     make docker-server
     ```
 
-3. To start the client container, run:  
+2. To start the client container, run:  
     ```bash
     make docker-client
     ```

@@ -1,3 +1,5 @@
+.PHONY: server client create-network docker-server docker-client
+
 server:
 	go run cmd/server/main.go
 
