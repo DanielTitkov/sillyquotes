@@ -2,42 +2,56 @@ package pow
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
+	"encoding/binary"
+	"errors"
 	"math/rand"
-	"strings"
-	"time"
 )
 
 const (
-	DefaultChallengeLength = 10
-	DefaultRequiredZeros   = 4
+	DefaultChallengeLength = 12
+	DefaultRequiredZeros   = 5
+	chars                  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-func GenerateChallenge(length int) string {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	chars := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	b := make([]rune, length)
+func GenerateChallenge(length int) []byte {
+	b := make([]byte, length)
 	for i := range b {
-		b[i] = chars[r.Intn(len(chars))]
+		b[i] = chars[rand.Intn(len(chars))]
 	}
-	return string(b)
+
+	return []byte(b)
 }
 
-func CheckPoW(challenge, solution string, requiredZeros int) bool {
-	data := challenge + solution
-	hash := sha256.Sum256([]byte(data))
-	return strings.HasPrefix(hex.EncodeToString(hash[:]), strings.Repeat("0", requiredZeros))
-}
+func CheckPoW(challenge []byte, solution uint32, requiredZeros int) bool {
+	solutionBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(solutionBytes, solution)
+	data := append(challenge, solutionBytes...)
+	hash := sha256.Sum256(data)
 
-func SolveChallenge(challenge string, requiredZeros int) string {
-	for i := 0; ; i++ {
-		solution := fmt.Sprintf("%d", i)
-		data := challenge + solution
-		hash := sha256.Sum256([]byte(data))
-		if strings.HasPrefix(hex.EncodeToString(hash[:]), strings.Repeat("0", requiredZeros)) {
-			return solution
+	requiredBytes := requiredZeros / 2
+	for i := 0; i < requiredBytes; i++ {
+		if hash[i] != 0 {
+			return false
 		}
 	}
+
+	if requiredZeros%2 != 0 {
+		if hash[requiredBytes]&0xF0 != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func SolveChallenge(challenge []byte, requiredZeros int) (uint32, error) {
+	var i uint32
+	maxUint32 := uint32(0xFFFFFFFF)
+	for i = 0; i < maxUint32; i++ {
+		if CheckPoW(challenge, i, requiredZeros) {
+			return i, nil
+		}
+	}
+
+	return 0, errors.New("failed to find a solution")
 }

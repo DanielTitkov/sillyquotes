@@ -2,11 +2,10 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"net"
 	"os"
-	"strings"
+	"strconv"
 	"time"
 
 	"github.com/DanielTitkov/sillyquotes/internal/pow"
@@ -24,20 +23,23 @@ func request(address string) error {
 	}
 	defer conn.Close()
 
-	buffer := make([]byte, 1024)
+	buffer := make([]byte, pow.DefaultChallengeLength)
 	n, err := conn.Read(buffer)
 	if err != nil {
 		return err
 	}
 
-	challenge := strings.TrimSpace(string(buffer[:n]))
+	challenge := buffer[:n]
 
-	log.Printf("Recieved challenge: '%s' of len %d", challenge, len(challenge))
+	log.Printf("Received challenge: '%s' of len %d", string(challenge), len(challenge))
 
-	solution := pow.SolveChallenge(fmt.Sprint(challenge), pow.DefaultRequiredZeros)
+	solution, err := pow.SolveChallenge(challenge, pow.DefaultRequiredZeros)
+	if err != nil {
+		return err
+	}
 
-	log.Printf("Generated solution: '%s'", solution)
-	_, err = conn.Write([]byte(solution))
+	log.Printf("Generated solution: '%d'", solution)
+	_, err = conn.Write([]byte(strconv.FormatUint(uint64(solution), 10))) // this is intentionally passed as a string
 	if err != nil {
 		return err
 	}

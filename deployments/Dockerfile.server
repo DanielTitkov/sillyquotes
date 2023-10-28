@@ -12,4 +12,4 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /server ./cmd/server
 FROM alpine:latest
 EXPOSE 8099
 COPY --from=build /server /server
-CMD ["/server"]
+CMD ["sh", "-c", "/server -listen=${LISTEN} -readTimeout=600 -writeTimeout=100"]

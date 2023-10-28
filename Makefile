@@ -1,4 +1,4 @@
-.PHONY: server client create-network docker-server docker-client
+.PHONY: server client create-network docker-server docker-client test bench lint
 
 server:
 	go run cmd/server/main.go
@@ -17,3 +17,13 @@ docker-server: create-network
 docker-client: create-network
 	docker build -t quotes_client -f deployments/Dockerfile.client .
 	docker run --rm --network=quotes -e ADDRESS=quotes_server:8099 quotes_client
+
+test: 
+	go test ./...
+
+bench:
+	go test -bench=. -count 4
+
+lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.54.2
+	$(shell go env GOPATH)/bin/golangci-lint run -v

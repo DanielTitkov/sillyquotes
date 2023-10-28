@@ -2,12 +2,13 @@ package quote
 
 import (
 	"math/rand"
-	"time"
 )
 
-func Random() string {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+type Provider struct {
+	quotes []string
+}
 
+func NewProvider() *Provider {
 	quotes := []string{
 		"Why did the chicken cross the playground? To get to the other slide!",
 		"The early bird might get the worm, but the second mouse gets the cheese.",
@@ -50,5 +51,11 @@ func Random() string {
 		"Why couldn't the leopard play hide and seek? Because he was always spotted.",
 	}
 
-	return quotes[r.Intn(len(quotes))]
+	return &Provider{
+		quotes: quotes,
+	}
+}
+
+func (p *Provider) Random() string {
+	return p.quotes[rand.Intn(len(p.quotes))]
 }
